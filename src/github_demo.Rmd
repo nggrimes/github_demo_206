@@ -1,0 +1,102 @@
+---
+title: "GitHub Collaboration"
+author: "Nathaniel Grimes"
+date: "2022-10-13"
+output: 
+  html_document:
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,message=FALSE)
+
+library(tidyverse)
+library(janitor)
+library(here)
+library(knitr)
+```
+
+## Introduction
+
+Rent burden is a growing problem in the United States. However, the vast size and unique demographic composition of each state leads to variation in rent burdens. This analysis will visualize the difference in the different regions of the United States.
+
+## Methods
+
+Normally we would do a lot of fancy analysis like a multiple regression that could predict which factors lead to higher rent burden across states or regions. For simplicity we are only going to plot the differences at the region level. Then I challenge you to make your own graph with all the states rent burdens.
+
+## Data
+
+The American Community Survey contains data on median yearly income and median monthly rent for all 50 states. The tidycensus package contains data from the 2017 survey. Survey responses also report the 90% margin of error surrounding sampling errors.
+
+```{r dataload}
+#Load in base rent data
+us_rent_df<-tidyr::us_rent_income
+
+#get the regions and land area for each state
+us_region<-state.region
+
+
+# filter out non-states, then get the data into wider so we can calculate rent burden across the 3 regions
+rent_summary<-us_rent_df %>% 
+  filter(!NAME %in%c("District of Columbia","Puerto Rico")) %>%
+  pivot_wider(names_from = variable,values_from = c(estimate,moe)) %>% 
+  mutate(estimate_income=estimate_income/12) %>%  #Go from yearly to monthly
+  mutate(burden_estimate=estimate_rent/estimate_income,burden_moe=moe_rent/moe_income) %>% 
+  mutate(region=as.character(us_region)) %>% #Add in the regions
+  mutate(region=str_replace_all(region,"North Central","Midwest")) %>%  #It's the Midwest, not North Central I will throw hands on this
+  group_by(region) %>% 
+  summarize(mean_burden=mean(burden_estimate),mean_moe=mean(burden_moe))
+
+```
+
+Normally we would do a lot of fancy analysis like a multiple regression that could predict which factors lead to higher rent burden across states or regions. For simplicity we are only going to plot the difference at the state and region level.
+
+## Results
+
+```{r regionplot,fig.cap="Figure 1. Rent burden as a percent of montly income across the four geographic regions of the US. Rent burdens are calculated by taking the median monthly rent and dividing by reported median motly income. Data taken from the 2017 American Community Survey", fig.align='center'}
+
+
+region_bar<-ggplot(rent_summary,aes(x=region,y=mean_burden))+
+  geom_col(fill="deepskyblue",color="black",size=1.5)+
+  theme_bw()+
+  labs(x="",y="Rent Burden in 2017 \n")+
+  scale_y_continuous(labels=c("0%","10%","20%","30%","40%"),expand=c(0,0),limits=c(0,.5),breaks=seq(0,.4,by=.1))+
+  theme(axis.text.y =  element_text(size=14))+
+  theme(axis.text.x = element_text(size=18,color="black"))+
+  theme(axis.title = element_text(size=18))
+
+region_bar
+```
+
+```{r}
+top5_state<-us_rent_df %>% 
+  filter(!NAME %in%c("District of Columbia","Puerto Rico")) %>% 
+  pivot_wider(names_from = variable,values_from = c(estimate,moe)) %>% 
+  mutate(estimate_income=estimate_income/12) %>% 
+  mutate(burden_estimate=estimate_rent/estimate_income,burden_moe=moe_rent/moe_income) %>% 
+  slice_max(order_by = burden_estimate,n=5) %>% 
+  mutate(pct=round(burden_estimate*100)) %>% 
+  select(NAME,pct)
+
+
+
+  
+```
+
+```{r}
+
+kable(top5_state,col.names = c("State","Rent Burden (%)"),format="html",caption = "Table 1.Top 5 States with the heaviest rent burdens in 2017") %>% 
+  kableExtra::kable_styling(font_size = 14)
+```
+
+
+```{r Renae, eval= FALSE, fig.cap="Figure 2. Look at those sexy 90% confidence intervals"}
+## Renae here's some quick code for you to adjust when we do the github in person demo Play around with the settings but I basically need you to add errorbars. You
+
+region_bar+geom_errorbar(aes(ymin=mean_burden-mean_moe,ymax=mean_burden+mean_moe),width=0.5,size=1.5,color="red")
+```
+
+
+## Discussion
+
+Yo this sucks and it's only gotten worse. Strike for COLA!!
