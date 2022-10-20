@@ -1,6 +1,8 @@
 ---
 title: "GitHub Collaboration"
-author: "Nathaniel Grimes"
+author: 
+- Nathaniel Grimes
+- Renae Marshall
 date: "2022-10-13"
 output: 
   html_document:
@@ -93,7 +95,7 @@ kable(top5_state,col.names = c("State","Rent Burden (%)"),format="html",caption 
 ```{r Renae, eval= FALSE, fig.cap="Figure 2. Look at those sexy 90% confidence intervals"}
 ## Renae here's some quick code for you to adjust when we do the github in person demo Play around with the settings but I basically need you to add errorbars. You
 
-region_bar+geom_errorbar(aes(ymin=mean_burden-mean_moe,ymax=mean_burden+mean_moe),width=0.5,size=1.5,color="red")
+#region_bar+geom_errorbar(aes(ymin=mean_burden-mean_moe,ymax=mean_burden+mean_moe),width=0.5,size=1.5,color="red")
 ```
 
 
